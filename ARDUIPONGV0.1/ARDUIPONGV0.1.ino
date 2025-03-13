@@ -21,7 +21,9 @@ bool debug = false;
 void setup() {
   Serial.begin(115200);
   ClearScreen();
-  Serial.print("ARDUIPONG / alpha 0.1");
+  Serial.println("ARDUIPONG / alpha 0.1");
+  Serial.println("Made By Abdelali221");
+  Serial.print("Github : https://github.com/abdelali221/ArduiPong");
   delay(2000);
   ClearScreen();
 }
