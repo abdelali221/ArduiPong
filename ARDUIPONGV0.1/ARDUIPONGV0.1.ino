@@ -1,3 +1,4 @@
+
 const uint8_t ROWS = 20;
 const uint8_t COLS = 70;
 const uint8_t NL = 10; // NewLine command
@@ -12,8 +13,10 @@ int ScanX = 0;
 int ScanY = 0;
 int paddleX = COLS - 3;
 int paddleY = ROWS/2;
-int Speed = 100;
+int Speed = 0;
 int Score = 0;
+
+bool debug = false;
 
 void setup() {
   Serial.begin(115200);
@@ -24,16 +27,16 @@ void setup() {
 }
 
 void loop() {
-  Render();
-  updateBallPos();
   if (Serial.available()) {
     SerialManage();
   }
+  RenderGame();
+  updateBallPos();
   CursorReset();
   delay(Speed);
 }
 
-void Render(){
+void RenderGame(){
   for (ScanY = 0; ScanY <= ROWS; ScanY++) {
     if (ScanY == 0 || ScanY == ROWS) {
       for (ScanX = 0; ScanX < COLS; ScanX++) {
@@ -41,7 +44,7 @@ void Render(){
       }
     } else {
       for (ScanX = 0; ScanX <= COLS; ScanX++) {
-        if (ScanX == 0 || ScanX == COLS) {
+        if (ScanX == 0) {
           Serial.print("|");
         } else if (ScanX == ballX && ScanY == ballY) {
           Serial.print("#");
@@ -55,13 +58,39 @@ void Render(){
     ReturnToline();
   }
   Serial.print("Score : ");
-  Serial.println(Score);
+  Serial.print(Score);
+  if (debug) {
+    PrintDebug();
+  }
+}
+
+void PrintDebug() {
+  Serial.print(" / POS X : ");
+  if (ballX < 10) {
+    Serial.print("0");
+  }
+  Serial.print(ballX);
+  Serial.print(" / POS Y : ");
+  if (ballY < 10) {
+    Serial.print("0");
+  }
+  Serial.println(ballY);
+  Serial.print("Vx : ");
+  if (VballX >= 0) {
+    Serial.print("+");
+  }
+  Serial.print(VballX);
+  Serial.print(" / Vy : ");
+  if (VballY >= 0) {
+    Serial.print("+");
+  }
+  Serial.print(VballY);
 }
 
 void updateBallPos() {
-  if (ballX == COLS - 2 && VballX == 1) {
+  if (ballX == COLS - 1 && VballX == 1) {
     LooseScreen();
-  } else if (ballX == 2 && VballX == -1) {
+  } else if (ballX == 1 && VballX == -1) {
     Score++;
     VballX = 1;
   } 
@@ -73,12 +102,20 @@ void updateBallPos() {
   }
   
   if (ballX == paddleX - 1) {
-    if (ballY == paddleY - 1) {
+    if (ballY == paddleY - 1 && ballY == 1) {
       VballX = -1;
-      VballY = -1;
-    } else if (ballY == paddleY) {
+      VballY = 1;
+    } else if (ballY == paddleY - 1) {
+      VballX = -1;
+      VballY = 1;
+    }
+    if (ballY == paddleY) {
       VballX = -1;
       VballY = VballY;
+    }
+    if (ballY == paddleY + 1 && ballY == ROWS - 1) {
+      VballX = -1;
+      VballY = -1;
     } else if (ballY == paddleY + 1) {
       VballX = -1;
       VballY = 1;
@@ -86,6 +123,12 @@ void updateBallPos() {
   }
   ballX = ballX + VballX;
   ballY = ballY + VballY;
+  if (ballX > COLS - 1 || ballY > ROWS - 1) {
+    ClearScreen();
+    Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
+    PrintDebug();
+    Halt();
+  }
 }
 
 void ReturnToline() {
