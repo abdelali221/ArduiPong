@@ -1,25 +1,25 @@
 const uint8_t ROWS = 20;
-const uint8_t COLS = 50;
+const uint8_t COLS = 70;
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
 
 uint8_t ballX = COLS/2;
 uint8_t ballY = ROWS/2;
-int VballX = 1;
-int VballY = 0;
+int VballX = -1;
+int VballY = 1;
 int ScanX = 0;
 int ScanY = 0;
 int paddleX = COLS - 3;
 int paddleY = ROWS/2;
-int Speed = 50;
-
+int Speed = 100;
+int Score = 0;
 
 void setup() {
   Serial.begin(115200);
   ClearScreen();
   Serial.print("ARDUIPONG / alpha 0.1");
-  delay(5000);
+  delay(2000);
   ClearScreen();
 }
 
@@ -29,7 +29,7 @@ void loop() {
   if (Serial.available()) {
     SerialManage();
   }
-  ClearScreen();
+  CursorReset();
   delay(Speed);
 }
 
@@ -54,16 +54,15 @@ void Render(){
     }
     ReturnToline();
   }
-  Serial.print(ballX);
-  Serial.println(VballX);
-  Serial.print(ballY);
-  Serial.println(VballY);
+  Serial.print("Score : ");
+  Serial.println(Score);
 }
 
 void updateBallPos() {
   if (ballX == COLS - 2 && VballX == 1) {
-    VballX = -1;
+    LooseScreen();
   } else if (ballX == 2 && VballX == -1) {
+    Score++;
     VballX = 1;
   } 
 
@@ -96,19 +95,41 @@ void ReturnToline() {
 
 void ClearScreen() {
   Serial.write(ESC); // ESC command (Required to send the Clear Screen instruction)
-  Serial.print("[2J"); // Clear the terminal
+  Serial.print("[2J"); // Clears the Terminal
+}
+void CursorReset() {
+  Serial.write(ESC); // ESC command (Required to send the Clear Screen instruction)
+  Serial.print("[0;0f"); // Sets the Cursor to 0;0
 }
 
 void SerialManage() {
-  char chr = Serial.read();
+  if (Serial.available() > 0) {
+    char chr = Serial.read();
+    switch (chr) {
+      case 'z':
+        if (paddleY > 2) {
+          paddleY--;
+        }
+      break;
 
-  switch (chr) {
-    case 'z':
-      paddleY--;
-    break;
-
-    case 's':
-      paddleY++;
-    break;
+      case 's':
+        if (paddleY < ROWS - 2) {
+          paddleY++;
+        }
+      break;
+    }
   }
+}
+
+void LooseScreen() {
+  ClearScreen();
+  Serial.println(" You Lost!");
+  Serial.print("Score : ");
+  Serial.println(Score);
+  Serial.print("Press the Reset button to restart");
+  Halt();
+}
+
+void Halt() {
+  Halt();
 }
