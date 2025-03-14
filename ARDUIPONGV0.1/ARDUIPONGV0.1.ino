@@ -1,3 +1,11 @@
+/* ChangeLog :
+
+ - Alpha 0.1 : Initial release
+ - Alpha 0.2 : Added HighScore System
+
+*/
+
+#include <EEPROM.h>
 // Constants :
 
 const uint8_t ROWS = 20;
@@ -21,6 +29,7 @@ int paddleY = ROWS/2;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
+uint8_t HighScore;
 bool Frame = true;
 
 // Booleans :
@@ -33,7 +42,8 @@ bool start = false;
 void setup() {
   Serial.begin(115200);
   ClearScreen();
-  Serial.println("ARDUIPONG / alpha 0.1");
+  SetCursor(0, 0);
+  Serial.println("ARDUIPONG / alpha 0.2");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);
@@ -245,9 +255,17 @@ void SerialManage() {
 
 void GameOverScreen() {
   ClearScreen();
+  HighScore = EEPROM.read(0);
   Serial.println(" Game Over!");
+  if (HighScore < Score) {
+    HighScore = Score;
+    EEPROM.write(0, Score);
+    Serial.println("New High Score!!");
+  }  
   Serial.print("Score : ");
   Serial.println(Score);
+  Serial.print("High Score : ");
+  Serial.println(HighScore);
   Serial.print("Press ENTER to restart");
   updateBallPos();
   Reset();
@@ -256,6 +274,8 @@ void GameOverScreen() {
 
 void Reset() {
 
+  paddleX = COLS - 3;
+  paddleY = ROWS/2;
   ballX = paddleX - 1;
   ballY = paddleY;
   VballX = 0;
