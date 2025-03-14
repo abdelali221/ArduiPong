@@ -1,5 +1,5 @@
 # ArduiPong
- Pong On Arduino!
+ Pong game on the Arduino!
 
 # Requirements : 
 
