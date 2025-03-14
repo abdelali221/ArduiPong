@@ -14,6 +14,7 @@ const uint8_t COLS = 41; // Should be Uneven
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
+const uint8_t BELL = 7;
 
 // Variables :
 
@@ -61,13 +62,19 @@ void loop() {
 void RenderGame(){
 
   for (ScanY = 0; ScanY <= ROWS; ScanY++) {
+
     for (ScanX = 0; ScanX <= COLS; ScanX++) {
-      if ( ( (ScanX == 0 || ScanX == COLS) && ScanY > 1 && ScanY < ROWS) && Frame) {
+
+      if ( ( (ScanX == 1 || ScanX == COLS) && (ScanY > 1 && ScanY < ROWS) ) && Frame) {
+
         SetCursor(ScanX, ScanY);
+
         if (!start) {
           delay(10);
-        } 
+        }
+
         Serial.print("|");
+
       } else if (ScanX == ballX && ScanY == ballY) {
         SetCursor(ANSballX, ANSballY);
         Serial.print(" ");
@@ -79,42 +86,55 @@ void RenderGame(){
         SetCursor(ScanX, ScanY);
         Serial.print("M");
       } else if ((ScanY == 0 || ScanY == ROWS) && Frame) {
-        SetCursor(ScanX, ScanY);
+          SetCursor(ScanX, ScanY);
         if (!start) {
           delay(10);
         }        
+
         Serial.print("-");
+
       }
+
     }
+
     ReturnToline();
+
   }
-  
+    
   SetCursor(0, ROWS + 2);
+
   if (!start) {
     Serial.print("Press SPACE to Start game / Score : ");
   } else {
     Serial.print("Press SPACE to end game / Score : ");
   }
+
   Serial.println(Score);
   Serial.print("Balls : ");
+
   for (int i = 0; i < Lifes; i++) {
     Serial.print("O");
   }
 
   Serial.print(" / Speed : ");
+
   if (Speed <= 100 && Speed > 90) {
     Serial.print("00");
   } else if (Speed <= 90 && Speed > 0) {
     Serial.print("0");
   }
+
   Serial.print(100 - Speed);
+
   if (debug) {
     PrintDebug();
   }
+
   Frame = false;
   if (Serial.available()) {
     SerialManage();
   }
+
 }
 
 void PrintDebug() {
@@ -170,6 +190,7 @@ void updateBallPos() {
     }
   
     if (ballY == paddleY - 1 && (ballX >= paddleX - 2 && ballX <= paddleX + 2) ) {
+      Serial.write(BELL);
       VballY = -1;
       if (ballX == 1) {      
         VballX = 1;

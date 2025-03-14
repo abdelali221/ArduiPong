@@ -14,6 +14,7 @@ const uint8_t COLS = 50;
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
+const uint8_t BELL = 7;
 
 // Variables :
 
@@ -163,7 +164,8 @@ void updateBallPos() {
       VballY = -1;
     }
   
-    if (ballX == paddleX - 1 && (ballY == paddleY || ballY == paddleY - 1 || ballY == paddleY + 1) ) {
+    if (ballX == paddleX - 1 && (ballY >= paddleY - 1 && ballY <= paddleY + 1) ) {
+      Serial.write(BELL);
       VballX = -1;
         if (ballY == 1) {      
         VballY = 1;
