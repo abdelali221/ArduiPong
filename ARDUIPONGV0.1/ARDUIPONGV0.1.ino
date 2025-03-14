@@ -21,7 +21,7 @@ int paddleY = ROWS/2;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
-uint8_t Frame = 0;
+bool Frame = true;
 
 // Booleans :
 
@@ -51,7 +51,7 @@ void RenderGame(){
 
   for (ScanY = 0; ScanY <= ROWS; ScanY++) {
     for (ScanX = 0; ScanX <= COLS; ScanX++) {
-      if ((ScanX == 0 && ScanY > 1 && ScanY < ROWS) && Frame == 0) {
+      if ((ScanX == 0 && ScanY > 1 && ScanY < ROWS) && Frame) {
         SetCursor(ScanX, ScanY);
         Serial.print("|");
       } else if (ScanX == ballX && ScanY == ballY) {
@@ -64,7 +64,7 @@ void RenderGame(){
       } else if (ScanX == paddleX && (ScanY >= paddleY - 1 && ScanY <= paddleY + 1) ) {
         SetCursor(ScanX, ScanY);
         Serial.print("[");
-      } else if ((ScanY == 0 || ScanY == ROWS) && Frame == 0) {
+      } else if ((ScanY == 0 || ScanY == ROWS) && Frame) {
         SetCursor(ScanX, ScanY);
         Serial.print("-");
       }
@@ -85,16 +85,16 @@ void RenderGame(){
   }
 
   Serial.print(" / Speed : ");
-  if (Speed < 10) {
-    Serial.print("0");
-  } else if (Speed >= 10 && Speed < 100) {
+  if (Speed <= 100 && Speed > 90) {
+    Serial.print("00");
+  } else if (Speed <= 90 && Speed > 0) {
     Serial.print("0");
   }
-  Serial.print(1000/Speed);
+  Serial.print(100 - Speed);
   if (debug) {
     PrintDebug();
   }
-  Frame = 1;
+  Frame = false;
   if (Serial.available()) {
     SerialManage();
   }
@@ -132,12 +132,12 @@ void updateBallPos() {
     VballY = 0;
   } else {
     if (ballX == COLS - 1 && VballX == 1) {
+      ballX = COLS - 3;
+      ballY = ROWS/2;      
       if (Lifes < 1) {
         GameOverScreen();
       } else {
         ClearScreen();
-        ballX = COLS - 3;
-        ballY = ROWS/2;
         start = false;
         Lifes--;
       }
@@ -178,7 +178,7 @@ void ReturnToline() {
 }
 
 void ClearScreen() {
-  Frame = 0;
+  Frame = true;
   Serial.write(ESC); // ESC command (Required to send the Clear Screen instruction)
   Serial.print("[2J"); // Clears the Terminal
 }
@@ -223,14 +223,14 @@ void SerialManage() {
       break;
 
       case '+':
-        if (Speed > 10) {
+        if (Speed > 0) {
           Speed--;
         }
       break;
 
       case ' ':
         if (!start) {
-          Frame = 0;
+          VballX = -1;
           VballY = -1;
           start = true;
           ClearScreen();
@@ -249,17 +249,21 @@ void GameOverScreen() {
   Serial.print("Score : ");
   Serial.println(Score);
   Serial.print("Press ENTER to restart");
+  updateBallPos();
   Reset();
   exitloop = false;
 }
 
 void Reset() {
 
-  ballX = COLS - 3;
-  ballY = ROWS/2;
+  ballX = paddleX - 1;
+  ballY = paddleY;
+  VballX = 0;
+  VballY = 0;
   Score = 0;
   Lifes = 3;
-  Frame = 0;
+  Frame = false;
+  start = false;
 
   while (!exitloop) {
     if (Serial.available()) {
