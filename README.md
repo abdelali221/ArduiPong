@@ -7,7 +7,7 @@
 
 # Disclamer :
 
-This program was tested and designed for TeraTerm 5 and HyperTerminal, if you use the Arduino IDE integrated Serial Monitor it WON'T WORK.
+This program was tested and designed for TeraTerm 5, HyperTerminal and PuTTY, if you use the Arduino IDE integrated Serial Monitor it WON'T WORK.
 
 # Controls : 
 
