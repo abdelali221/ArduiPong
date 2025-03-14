@@ -44,7 +44,7 @@ void setup() {
   Serial.begin(115200);
   ClearScreen();
   SetCursor(0, 0);
-  Serial.println("ARDUIPONG / alpha 0.2");
+  Serial.println("ARDUIPONG / alpha 0.3 / HORIZONTAL Version");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);

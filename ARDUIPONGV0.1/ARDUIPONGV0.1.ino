@@ -2,6 +2,7 @@
 
  - Alpha 0.1 : Initial release
  - Alpha 0.2 : Added HighScore System
+ - Alpha 0.3 : Added a Horizontal Version
 
 */
 
@@ -43,7 +44,7 @@ void setup() {
   Serial.begin(115200);
   ClearScreen();
   SetCursor(0, 0);
-  Serial.println("ARDUIPONG / alpha 0.2");
+  Serial.println("ARDUIPONG / alpha 0.3 / VERTICAL Version");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);
