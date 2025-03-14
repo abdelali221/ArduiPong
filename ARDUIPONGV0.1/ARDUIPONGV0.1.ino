@@ -258,6 +258,7 @@ void SerialManage() {
 
 void GameOverScreen() {
   ClearScreen();
+  CursorReset();
   HighScore = EEPROM.read(0);
   Serial.println(" Game Over!");
   if (HighScore < Score) {

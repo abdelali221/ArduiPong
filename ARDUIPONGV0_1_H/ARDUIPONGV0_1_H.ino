@@ -18,16 +18,17 @@ const uint8_t BELL = 7;
 
 // Variables :
 
+uint8_t paddleX = COLS/2;
+uint8_t paddleY = ROWS - 2;
 uint8_t ballX = COLS/2;
-int ANSballX;
-uint8_t ballY = ROWS - 4;
-int ANSballY;
+uint8_t ANSballX;
+uint8_t ballY = paddleY - 1;
+uint8_t ANSballY;
 int VballX = -1;
 int VballY = 1;
 uint8_t ScanX = 0;
 uint8_t ScanY = 0;
-int paddleX = COLS/2;
-int paddleY = ROWS - 2;
+int paddleMoveFlag = 0;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
@@ -54,6 +55,7 @@ void setup() {
 
 void loop() {
   SetCursor(0, 0);
+  paddleMoveFlag = 0;
   RenderGame();
   updateBallPos();
   delay(Speed);
@@ -118,13 +120,13 @@ void RenderGame(){
 
   Serial.print(" / Speed : ");
 
-  if (Speed <= 100 && Speed > 90) {
+  if (Speed <= 200 && Speed > 190) {
     Serial.print("00");
-  } else if (Speed <= 90 && Speed > 0) {
+  } else if (Speed <= 190 && Speed > 100 ) {
     Serial.print("0");
   }
 
-  Serial.print(100 - Speed);
+  Serial.print(200 - Speed);
 
   if (debug) {
     PrintDebug();
@@ -192,10 +194,14 @@ void updateBallPos() {
     if (ballY == paddleY - 1 && (ballX >= paddleX - 2 && ballX <= paddleX + 2) ) {
       Serial.write(BELL);
       VballY = -1;
-      if (ballX == 1) {      
+      if (ballX == 1) {
         VballX = 1;
       } else if (ballX == COLS - 1) {
         VballX = -1;
+      } else {
+        if (paddleMoveFlag != 0) {
+          VballX = paddleMoveFlag;
+        }
       }
     }
   }
@@ -204,6 +210,7 @@ void updateBallPos() {
   ballY = ballY + VballY;
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
+    RenderGame();
     Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
     PrintDebug();
     Reset();
@@ -244,6 +251,7 @@ void SerialManage() {
           Serial.print("  ");
           paddleX--;
           paddleX--;
+          paddleMoveFlag = -1;
         }
       break;
 
@@ -253,11 +261,12 @@ void SerialManage() {
           Serial.print("  ");
           paddleX++;
           paddleX++;
+          paddleMoveFlag = 1;
         }
       break;
 
       case '-':
-        if (Speed < 100) {
+        if (Speed < 200) {
           Speed++;
         }
       break;
@@ -285,6 +294,7 @@ void SerialManage() {
 
 void GameOverScreen() {
   ClearScreen();
+  CursorReset();
   HighScore = EEPROM.read(0);
   Serial.println(" Game Over!");
   if (HighScore < Score) {
