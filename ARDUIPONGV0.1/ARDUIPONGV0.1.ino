@@ -1,68 +1,102 @@
+// Constants :
 
 const uint8_t ROWS = 20;
-const uint8_t COLS = 70;
+const uint8_t COLS = 50;
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
 
-uint8_t ballX = COLS/2;
+// Variables :
+
+uint8_t ballX = COLS - 4;
+int ANSballX;
 uint8_t ballY = ROWS/2;
+int ANSballY;
 int VballX = -1;
 int VballY = 1;
-int ScanX = 0;
-int ScanY = 0;
+uint8_t ScanX = 0;
+uint8_t ScanY = 0;
 int paddleX = COLS - 3;
 int paddleY = ROWS/2;
-int Speed = 0;
-int Score = 0;
+uint8_t Speed = 20;
+uint8_t Score = 0;
+uint8_t Lifes = 3;
+uint8_t Frame = 0;
+
+// Booleans :
 
 bool debug = false;
+bool exitloop = false;
+bool start = false;
+
 
 void setup() {
   Serial.begin(115200);
   ClearScreen();
   Serial.println("ARDUIPONG / alpha 0.1");
   Serial.println("Made By Abdelali221");
-  Serial.print("Github : https://github.com/abdelali221/ArduiPong");
+  Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);
   ClearScreen();
 }
 
 void loop() {
-  if (Serial.available()) {
-    SerialManage();
-  }
+  SetCursor(0, 0);
   RenderGame();
   updateBallPos();
-  CursorReset();
   delay(Speed);
 }
 
 void RenderGame(){
+
   for (ScanY = 0; ScanY <= ROWS; ScanY++) {
-    if (ScanY == 0 || ScanY == ROWS) {
-      for (ScanX = 0; ScanX < COLS; ScanX++) {
+    for (ScanX = 0; ScanX <= COLS; ScanX++) {
+      if ((ScanX == 0 && ScanY > 1 && ScanY < ROWS) && Frame == 0) {
+        SetCursor(ScanX, ScanY);
+        Serial.print("|");
+      } else if (ScanX == ballX && ScanY == ballY) {
+        SetCursor(ANSballX, ANSballY);
+        Serial.print(" ");
+        SetCursor(ScanX, ScanY);
+        ANSballX = ScanX;
+        ANSballY = ScanY;
+        Serial.print("O");
+      } else if (ScanX == paddleX && (ScanY >= paddleY - 1 && ScanY <= paddleY + 1) ) {
+        SetCursor(ScanX, ScanY);
+        Serial.print("[");
+      } else if ((ScanY == 0 || ScanY == ROWS) && Frame == 0) {
+        SetCursor(ScanX, ScanY);
         Serial.print("-");
-      }
-    } else {
-      for (ScanX = 0; ScanX <= COLS; ScanX++) {
-        if (ScanX == 0) {
-          Serial.print("|");
-        } else if (ScanX == ballX && ScanY == ballY) {
-          Serial.print("#");
-        } else if (ScanX == paddleX && (ScanY >= paddleY - 1 && ScanY <= paddleY + 1) ) {
-          Serial.print("[");
-        } else {
-          Serial.print(" ");
-        }
       }
     }
     ReturnToline();
   }
-  Serial.print("Score : ");
-  Serial.print(Score);
+  
+  SetCursor(0, 21);
+  if (!start) {
+    Serial.print("Press SPACE to Start game / Score : ");
+  } else {
+    Serial.print("Press SPACE to end game / Score : ");
+  }
+  Serial.println(Score);
+  Serial.print("Balls : ");
+  for (int i = 0; i < Lifes; i++) {
+    Serial.print("O");
+  }
+
+  Serial.print(" / Speed : ");
+  if (Speed < 10) {
+    Serial.print("0");
+  } else if (Speed >= 10 && Speed < 100) {
+    Serial.print("0");
+  }
+  Serial.print(1000/Speed);
   if (debug) {
     PrintDebug();
+  }
+  Frame = 1;
+  if (Serial.available()) {
+    SerialManage();
   }
 }
 
@@ -86,50 +120,55 @@ void PrintDebug() {
   if (VballY >= 0) {
     Serial.print("+");
   }
-  Serial.print(VballY);
+  Serial.println(VballY);
+  Serial.print(Frame);
 }
 
 void updateBallPos() {
-  if (ballX == COLS - 1 && VballX == 1) {
-    LooseScreen();
-  } else if (ballX == 1 && VballX == -1) {
-    Score++;
-    VballX = 1;
-  } 
+  if (!start) {
+    ballX = paddleX - 1;
+    ballY = paddleY;
+    VballX = 0;
+    VballY = 0;
+  } else {
+    if (ballX == COLS - 1 && VballX == 1) {
+      if (Lifes < 1) {
+        GameOverScreen();
+      } else {
+        ClearScreen();
+        ballX = COLS - 3;
+        ballY = ROWS/2;
+        start = false;
+        Lifes--;
+      }
+    } else if (ballX == 2 && VballX == -1) {
+      Score++;
+      VballX = 1;
+    } 
 
-  if (ballY == 1) {
-    VballY = 1;
-  } else if (ballY == ROWS - 1) {
-    VballY = -1;
-  }
-  
-  if (ballX == paddleX - 1) {
-    if (ballY == paddleY - 1 && ballY == 1) {
-      VballX = -1;
-      VballY = 1;
-    } else if (ballY == paddleY - 1) {
-      VballX = -1;
-      VballY = 1;
-    }
-    if (ballY == paddleY) {
-      VballX = -1;
-      VballY = VballY;
-    }
-    if (ballY == paddleY + 1 && ballY == ROWS - 1) {
-      VballX = -1;
+    if (ballY == 2) {
+        VballY = 1;
+    } else if (ballY == ROWS - 1) {
       VballY = -1;
-    } else if (ballY == paddleY + 1) {
+    }
+  
+    if (ballX == paddleX - 1 && (ballY == paddleY || ballY == paddleY - 1 || ballY == paddleY + 1) ) {
       VballX = -1;
-      VballY = 1;
+        if (ballY == 1) {      
+        VballY = 1;
+      } else if (ballY == ROWS - 1) {
+        VballY = -1;
+      }
     }
   }
+
   ballX = ballX + VballX;
   ballY = ballY + VballY;
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
     Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
     PrintDebug();
-    Halt();
+    Reset();
   }
 }
 
@@ -139,6 +178,7 @@ void ReturnToline() {
 }
 
 void ClearScreen() {
+  Frame = 0;
   Serial.write(ESC); // ESC command (Required to send the Clear Screen instruction)
   Serial.print("[2J"); // Clears the Terminal
 }
@@ -147,34 +187,88 @@ void CursorReset() {
   Serial.print("[0;0f"); // Sets the Cursor to 0;0
 }
 
+void SetCursor(int x, int y) {
+  Serial.write(ESC); // ESC command (Required to send the Clear Screen instruction)
+  Serial.print("[");
+  Serial.print(y);
+  Serial.print(";");
+  Serial.print(x);
+  Serial.print("f");
+}
+
 void SerialManage() {
   if (Serial.available() > 0) {
     char chr = Serial.read();
     switch (chr) {
       case 'z':
-        if (paddleY > 2) {
+        if (paddleY > 3) {
+          SetCursor(COLS - 3, paddleY + 1);
+          Serial.print(" ");
           paddleY--;
         }
       break;
 
       case 's':
         if (paddleY < ROWS - 2) {
+          SetCursor(COLS - 3, paddleY - 1);
+          Serial.print(" ");
           paddleY++;
+        }
+      break;
+
+      case '-':
+        if (Speed < 100) {
+          Speed++;
+        }
+      break;
+
+      case '+':
+        if (Speed > 10) {
+          Speed--;
+        }
+      break;
+
+      case ' ':
+        if (!start) {
+          Frame = 0;
+          VballY = -1;
+          start = true;
+          ClearScreen();
+        } else {
+          GameOverScreen();
+          start = false;
         }
       break;
     }
   }
 }
 
-void LooseScreen() {
+void GameOverScreen() {
   ClearScreen();
-  Serial.println(" You Lost!");
+  Serial.println(" Game Over!");
   Serial.print("Score : ");
   Serial.println(Score);
-  Serial.print("Press the Reset button to restart");
-  Halt();
+  Serial.print("Press ENTER to restart");
+  Reset();
+  exitloop = false;
 }
 
-void Halt() {
-  Halt();
+void Reset() {
+
+  ballX = COLS - 3;
+  ballY = ROWS/2;
+  Score = 0;
+  Lifes = 3;
+  Frame = 0;
+
+  while (!exitloop) {
+    if (Serial.available()) {
+      char chr = Serial.read();
+
+      if (chr == NL || chr == CR) {
+        ClearScreen();
+        exitloop = true;
+      }
+    }
+  }
 }
