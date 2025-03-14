@@ -9,8 +9,8 @@
 #include <EEPROM.h>
 // Constants :
 
-const uint8_t ROWS = 40;
-const uint8_t COLS = 20;
+const uint8_t ROWS = 30;
+const uint8_t COLS = 41; // Should be Uneven
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
@@ -26,7 +26,7 @@ int VballY = 1;
 uint8_t ScanX = 0;
 uint8_t ScanY = 0;
 int paddleX = COLS/2;
-int paddleY = ROWS - 3;
+int paddleY = ROWS - 2;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
@@ -75,7 +75,7 @@ void RenderGame(){
         ANSballX = ScanX;
         ANSballY = ScanY;
         Serial.print("O");
-      } else if (ScanY == paddleY && (ScanX >= paddleX - 1 && ScanX <= paddleX + 1) ) {
+      } else if (ScanY == paddleY && (ScanX >= paddleX - 2 && ScanX <= paddleX + 2) ) {
         SetCursor(ScanX, ScanY);
         Serial.print("M");
       } else if ((ScanY == 0 || ScanY == ROWS) && Frame) {
@@ -89,7 +89,7 @@ void RenderGame(){
     ReturnToline();
   }
   
-  SetCursor(0, 21);
+  SetCursor(0, ROWS + 2);
   if (!start) {
     Serial.print("Press SPACE to Start game / Score : ");
   } else {
@@ -169,7 +169,7 @@ void updateBallPos() {
       VballX = -1;
     }
   
-    if (ballY == paddleY - 1 && (ballX == paddleX || ballX == paddleX - 1 || ballX == paddleX + 1) ) {
+    if (ballY == paddleY - 1 && (ballX >= paddleX - 2 && ballX <= paddleX + 2) ) {
       VballY = -1;
       if (ballX == 1) {      
         VballX = 1;
@@ -218,17 +218,19 @@ void SerialManage() {
     char chr = Serial.read();
     switch (chr) {
       case 'q':
-        if (paddleX > 3) {
+        if (paddleX > 4) {
           SetCursor(paddleX + 1, paddleY);
-          Serial.print(" ");
+          Serial.print("  ");
+          paddleX--;
           paddleX--;
         }
       break;
 
       case 'd':
-        if (paddleX < COLS - 2) {
-          SetCursor(paddleX - 1, paddleY);
-          Serial.print(" ");
+        if (paddleX < COLS - 3) {
+          SetCursor(paddleX - 2, paddleY);
+          Serial.print("  ");
+          paddleX++;
           paddleX++;
         }
       break;
@@ -282,7 +284,7 @@ void GameOverScreen() {
 void Reset() {
 
   paddleX = COLS/2;
-  paddleY = ROWS - 3;
+  paddleY = ROWS - 2;
   ballX = paddleX - 1;
   ballY = paddleY;
   VballX = 0;
