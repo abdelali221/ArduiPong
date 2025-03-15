@@ -19,15 +19,16 @@ const uint8_t BELL = 7;
 // Variables :
 
 uint8_t ballX = COLS - 4;
-int ANSballX;
+uint8_t ANSballX;
 uint8_t ballY = ROWS/2;
-int ANSballY;
+uint8_t ANSballY;
 int VballX = -1;
 int VballY = 1;
 uint8_t ScanX = 0;
 uint8_t ScanY = 0;
 int paddleX = COLS - 3;
 int paddleY = ROWS/2;
+int paddleMoveFlag = 0;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
@@ -36,7 +37,7 @@ bool Frame = true;
 
 // Booleans :
 
-bool debug = false;
+bool debug = true;
 bool exitloop = false;
 bool start = false;
 
@@ -54,6 +55,7 @@ void setup() {
 
 void loop() {
   SetCursor(0, 0);
+  paddleMoveFlag = 0;
   RenderGame();
   updateBallPos();
   delay(Speed);
@@ -171,6 +173,10 @@ void updateBallPos() {
         VballY = 1;
       } else if (ballY == ROWS - 1) {
         VballY = -1;
+      } else {
+        if (paddleMoveFlag != 0) {
+          VballY = paddleMoveFlag;
+        }
       }
     }
   }
@@ -218,6 +224,7 @@ void SerialManage() {
           SetCursor(COLS - 3, paddleY + 1);
           Serial.print(" ");
           paddleY--;
+          paddleMoveFlag = -1;
         }
       break;
 
@@ -226,6 +233,7 @@ void SerialManage() {
           SetCursor(COLS - 3, paddleY - 1);
           Serial.print(" ");
           paddleY++;
+          paddleMoveFlag = 1;
         }
       break;
 

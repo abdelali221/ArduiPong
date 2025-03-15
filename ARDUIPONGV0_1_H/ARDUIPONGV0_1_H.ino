@@ -171,6 +171,8 @@ void updateBallPos() {
     VballY = 0;
   } else {
     if (ballY == ROWS - 1 && VballY == 1) {
+      VballX = 0;
+      VballY = 0;
       ballX = paddleX;
       ballY = paddleY - 1;      
       if (Lifes < 1) {
@@ -179,7 +181,7 @@ void updateBallPos() {
         ClearScreen();
         start = false;
         Lifes--;
-      }
+      }d
     } else if (ballY == 2 && VballY == -1) {
       Score++;
       VballY = 1;
