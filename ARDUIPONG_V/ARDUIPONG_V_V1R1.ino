@@ -9,10 +9,11 @@
 */
 
 #include <EEPROM.h>
+
 // Constants :
 
-const uint8_t ROWS = 30;
-const uint8_t COLS = 41; // Should be Uneven
+const uint8_t ROWS = 20;
+const uint8_t COLS = 50;
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
@@ -20,11 +21,11 @@ const uint8_t BELL = 7;
 
 // Variables :
 
-uint8_t paddleX = COLS/2;
-uint8_t paddleY = ROWS - 2;
-uint8_t ballX = COLS/2;
+uint8_t paddleX = COLS - 3;
+uint8_t paddleY = ROWS/2;
+uint8_t ballX = COLS - 4;
 uint8_t ANSballX = 2;
-uint8_t ballY = paddleY - 1;
+uint8_t ballY = ROWS/2;
 uint8_t ANSballY = 2;
 int VballX = 0;
 int VballY = 0;
@@ -33,6 +34,7 @@ uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
 uint8_t HighScore;
+
 
 // Booleans :
 
@@ -47,8 +49,8 @@ bool Drawpaddle = true;
 void setup() {
   Serial.begin(115200);
   ClearScreen();
-  SetCursor(1, 1);
-  Serial.println("ARDUIPONG / Ver 1.0 Rev1 / HORIZONTAL Version");
+  SetCursor(0, 0);
+  Serial.println("ARDUIPONG / Ver 1.0 Rev1 / VERTICAL Version");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);
@@ -67,7 +69,6 @@ void loop() {
 }
 
 void RenderGame(){
-
   if (Frame) {
     RenderBorders();
   }
@@ -78,7 +79,6 @@ void RenderGame(){
   if (Serial.available()) {
     SerialManage();
   }
-
 }
 
 void RenderBorders() {
@@ -86,7 +86,7 @@ void RenderBorders() {
 
     for (int X = 1; X <= COLS; X++) {
 
-      if ( (X == 1 || X == COLS) && (Y >= 1 && Y <= ROWS) ) {
+      if ( (X == 1) && (Y >= 1 && Y <= ROWS) ) {
 
         SetCursor(X, Y);
 
@@ -112,8 +112,10 @@ void RenderBorders() {
 void RenderObjects() {
   if (Drawpaddle) {
     Drawpaddle = false;
-    SetCursor(paddleX - 2, paddleY);
-    Serial.print("MMMMM");
+    for (int i = -1; i < 2; i++) {
+      SetCursor(paddleX, paddleY + i);
+      Serial.print("[");
+    }
   }
 
   if (ANSballX != ballX || ANSballY != ballY) {
@@ -140,7 +142,7 @@ void PrintDebug() {
   if (ballY < 10) {
     Serial.print("0");
   }
-
+  
   Serial.println(ballY);
   Serial.print("Vx : ");
 
@@ -156,22 +158,19 @@ void PrintDebug() {
   }
 
   Serial.println(VballY);
-  Serial.println(Frame);
-  Serial.print(start);
+  Serial.print(Frame);
 }
 
 void updateBallPos() {
   if (!start) {
-    ballX = paddleX;
-    ballY = paddleY - 1;
+    ballX = paddleX - 1;
+    ballY = paddleY;
     VballX = 0;
     VballY = 0;
   } else {
-    if (ballY == ROWS - 1 && VballY == 1) {
-      VballX = 0;
-      VballY = 0;
-      ballX = paddleX;
-      ballY = paddleY - 1;      
+    if (ballX == COLS - 1 && VballX == 1) {
+      ballX = COLS - 3;
+      ballY = ROWS/2;      
       if (Lifes < 1) {
         GameOverScreen();
       } else {
@@ -181,28 +180,28 @@ void updateBallPos() {
         start = false;
         Lifes--;
       }
-    } else if (ballY == 2 && VballY == -1) {
+    } else if (ballX == 2 && VballX == -1) {
       printstatsFlag = true;
       Score++;
-      VballY = 1;
+      VballX = 1;
     } 
 
-    if (ballX == 2) {
-      VballX = 1;
-    } else if (ballX == COLS - 1) {
-      VballX = -1;
+    if (ballY == 2) {
+        VballY = 1;
+    } else if (ballY == ROWS - 1) {
+      VballY = -1;
     }
   
-    if (ballY == paddleY - 1 && (ballX >= paddleX - 2 && ballX <= paddleX + 2) ) {
+    if (ballX == paddleX - 1 && (ballY >= paddleY - 1 && ballY <= paddleY + 1) ) {
       Serial.write(BELL);
-      VballY = -1;
-      if (ballX == 1) {
-        VballX = 1;
-      } else if (ballX == COLS - 1) {
-        VballX = -1;
+      VballX = -1;
+        if (ballY == 1) {      
+        VballY = 1;
+      } else if (ballY == ROWS - 1) {
+        VballY = -1;
       } else {
         if (paddleMoveFlag != 0) {
-          VballX = paddleMoveFlag;
+          VballY = paddleMoveFlag;
         }
       }
     }
@@ -213,7 +212,6 @@ void updateBallPos() {
 
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
-    RenderGame();
     Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
     PrintDebug();
     Reset();
@@ -249,23 +247,21 @@ void SerialManage() {
     char chr = Serial.read();
 
     switch (chr) {
-      case 'q':
-        if (paddleX > 4) {
-          SetCursor(paddleX + 1, paddleY);
-          Serial.print("  ");
-          paddleX--;
-          paddleX--;
+      case 'z':
+        if (paddleY > 3) {
+          SetCursor(paddleX, paddleY + 1);
+          Serial.print(" ");
+          paddleY--;
           paddleMoveFlag = -1;
           Drawpaddle = true;
         }
       break;
 
-      case 'd':
-        if (paddleX < COLS - 3) {
-          SetCursor(paddleX - 2, paddleY);
-          Serial.print("  ");
-          paddleX++;
-          paddleX++;
+      case 's':
+        if (paddleY < ROWS - 2) {
+          SetCursor(paddleX, paddleY - 1);
+          Serial.print(" ");
+          paddleY++;
           paddleMoveFlag = 1;
           Drawpaddle = true;
         }
@@ -312,8 +308,8 @@ void GameOverScreen() {
     HighScore = Score;
     EEPROM.write(0, Score);
     Serial.println("New High Score!!");
-  }  
-  
+  }
+
   Serial.print("Score : ");
   Serial.println(Score);
   Serial.print("High Score : ");
@@ -326,8 +322,8 @@ void GameOverScreen() {
 
 void Reset() {
 
-  paddleX = COLS/2;
-  paddleY = ROWS - 2;
+  paddleX = COLS - 3;
+  paddleY = ROWS/2;
   ballX = paddleX - 1;
   ballY = paddleY;
   VballX = 0;
@@ -364,7 +360,7 @@ void PrintGameStatus() {
   Serial.print("Balls : ");
 
   for (int i = 0; i < Lifes; i++) {
-    Serial.print("O");
+    Serial.print("O ");
   }
 
   Serial.print(" / Speed : ");
