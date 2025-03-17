@@ -7,6 +7,7 @@
 */
 
 #include <EEPROM.h>
+
 // Constants :
 
 const uint8_t ROWS = 20;
@@ -37,7 +38,7 @@ bool Frame = true;
 
 // Booleans :
 
-bool debug = true;
+bool debug = false;
 bool exitloop = false;
 bool start = false;
 
@@ -87,53 +88,70 @@ void RenderGame(){
   }
   
   SetCursor(0, 21);
+
   if (!start) {
     Serial.print("Press SPACE to Start game / Score : ");
   } else {
     Serial.print("Press SPACE to end game / Score : ");
   }
+
   Serial.println(Score);
   Serial.print("Balls : ");
+
   for (int i = 0; i < Lifes; i++) {
     Serial.print("O");
   }
 
   Serial.print(" / Speed : ");
-  if (Speed <= 100 && Speed > 90) {
+
+  if (Speed <= 200 && Speed > 190) {
     Serial.print("00");
-  } else if (Speed <= 90 && Speed > 0) {
+  } else if (Speed <= 190 && Speed > 100 ) {
     Serial.print("0");
   }
-  Serial.print(100 - Speed);
+
+  Serial.print(200 - Speed);
+
   if (debug) {
     PrintDebug();
   }
+
   Frame = false;
+
   if (Serial.available()) {
     SerialManage();
   }
 }
 
 void PrintDebug() {
+
   Serial.print(" / POS X : ");
+
   if (ballX < 10) {
     Serial.print("0");
   }
+
   Serial.print(ballX);
   Serial.print(" / POS Y : ");
+
   if (ballY < 10) {
     Serial.print("0");
   }
+  
   Serial.println(ballY);
   Serial.print("Vx : ");
+
   if (VballX >= 0) {
     Serial.print("+");
   }
+
   Serial.print(VballX);
   Serial.print(" / Vy : ");
+
   if (VballY >= 0) {
     Serial.print("+");
   }
+
   Serial.println(VballY);
   Serial.print(Frame);
 }
@@ -183,6 +201,7 @@ void updateBallPos() {
 
   ballX = ballX + VballX;
   ballY = ballY + VballY;
+
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
     Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
@@ -218,6 +237,7 @@ void SetCursor(int x, int y) {
 void SerialManage() {
   if (Serial.available() > 0) {
     char chr = Serial.read();
+
     switch (chr) {
       case 'z':
         if (paddleY > 3) {
@@ -269,11 +289,13 @@ void GameOverScreen() {
   CursorReset();
   HighScore = EEPROM.read(0);
   Serial.println(" Game Over!");
+
   if (HighScore < Score) {
     HighScore = Score;
     EEPROM.write(0, Score);
     Serial.println("New High Score!!");
-  }  
+  }
+
   Serial.print("Score : ");
   Serial.println(Score);
   Serial.print("High Score : ");

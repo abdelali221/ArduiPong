@@ -21,11 +21,11 @@ const uint8_t BELL = 7;
 uint8_t paddleX = COLS/2;
 uint8_t paddleY = ROWS - 2;
 uint8_t ballX = COLS/2;
-uint8_t ANSballX;
+uint8_t ANSballX = 2;
 uint8_t ballY = paddleY - 1;
-uint8_t ANSballY;
-int VballX = -1;
-int VballY = 1;
+uint8_t ANSballY = 2;
+int VballX = 0;
+int VballY = 0;
 uint8_t ScanX = 0;
 uint8_t ScanY = 0;
 int paddleMoveFlag = 0;
@@ -33,19 +33,21 @@ uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
 uint8_t HighScore;
-bool Frame = true;
 
 // Booleans :
 
+bool Frame = true;
 bool debug = false;
 bool exitloop = false;
 bool start = false;
+bool printstatsFlag = true;
+bool Drawpaddle = true;
 
 
 void setup() {
   Serial.begin(115200);
   ClearScreen();
-  SetCursor(0, 0);
+  SetCursor(1, 1);
   Serial.println("ARDUIPONG / alpha 0.3 / HORIZONTAL Version");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
@@ -54,20 +56,23 @@ void setup() {
 }
 
 void loop() {
-  SetCursor(0, 0);
   paddleMoveFlag = 0;
   RenderGame();
+  if (printstatsFlag || debug) {
+    printstatsFlag = false;
+    PrintGameStatus();
+  }
   updateBallPos();
   delay(Speed);
 }
 
 void RenderGame(){
 
-  for (ScanY = 0; ScanY <= ROWS; ScanY++) {
+  for (ScanY = 1; ScanY <= ROWS; ScanY++) {
 
-    for (ScanX = 0; ScanX <= COLS; ScanX++) {
+    for (ScanX = 1; ScanX <= COLS; ScanX++) {
 
-      if ( ( (ScanX == 1 || ScanX == COLS) && (ScanY > 1 && ScanY < ROWS) ) && Frame) {
+      if ( ( (ScanX == 1 || ScanX == COLS) && (ScanY >= 1 && ScanY <= ROWS) ) && Frame) {
 
         SetCursor(ScanX, ScanY);
 
@@ -77,18 +82,19 @@ void RenderGame(){
 
         Serial.print("|");
 
-      } else if (ScanX == ballX && ScanY == ballY) {
+      } else if ((ScanX == ballX && ScanY == ballY) && (ANSballX != ballX || ANSballY != ballY) ) {
         SetCursor(ANSballX, ANSballY);
         Serial.print(" ");
         SetCursor(ScanX, ScanY);
         ANSballX = ScanX;
         ANSballY = ScanY;
         Serial.print("O");
-      } else if (ScanY == paddleY && (ScanX >= paddleX - 2 && ScanX <= paddleX + 2) ) {
+      } else if ( (ScanY == paddleY) && (ScanX == paddleX - 2) && Drawpaddle) {
+        Drawpaddle = false;
         SetCursor(ScanX, ScanY);
-        Serial.print("M");
-      } else if ((ScanY == 0 || ScanY == ROWS) && Frame) {
-          SetCursor(ScanX, ScanY);
+        Serial.print("MMMMM");     
+      } else if ((ScanY == 1 || ScanY == ROWS) && Frame) {
+        SetCursor(ScanX, ScanY);
         if (!start) {
           delay(10);
         }        
@@ -96,43 +102,11 @@ void RenderGame(){
         Serial.print("-");
 
       }
-
     }
-
-    ReturnToline();
-
   }
-    
-  SetCursor(0, ROWS + 2);
-
-  if (!start) {
-    Serial.print("Press SPACE to Start game / Score : ");
-  } else {
-    Serial.print("Press SPACE to end game / Score : ");
-  }
-
-  Serial.println(Score);
-  Serial.print("Balls : ");
-
-  for (int i = 0; i < Lifes; i++) {
-    Serial.print("O");
-  }
-
-  Serial.print(" / Speed : ");
-
-  if (Speed <= 200 && Speed > 190) {
-    Serial.print("00");
-  } else if (Speed <= 190 && Speed > 100 ) {
-    Serial.print("0");
-  }
-
-  Serial.print(200 - Speed);
-
-  if (debug) {
-    PrintDebug();
-  }
-
+  
   Frame = false;
+   
   if (Serial.available()) {
     SerialManage();
   }
@@ -140,27 +114,37 @@ void RenderGame(){
 }
 
 void PrintDebug() {
+
   Serial.print(" / POS X : ");
+
   if (ballX < 10) {
     Serial.print("0");
   }
+
   Serial.print(ballX);
   Serial.print(" / POS Y : ");
+
   if (ballY < 10) {
     Serial.print("0");
   }
+
   Serial.println(ballY);
   Serial.print("Vx : ");
+
   if (VballX >= 0) {
     Serial.print("+");
   }
+
   Serial.print(VballX);
   Serial.print(" / Vy : ");
+
   if (VballY >= 0) {
     Serial.print("+");
   }
+
   Serial.println(VballY);
-  Serial.print(Frame);
+  Serial.println(Frame);
+  Serial.print(start);
 }
 
 void updateBallPos() {
@@ -179,16 +163,19 @@ void updateBallPos() {
         GameOverScreen();
       } else {
         ClearScreen();
+        Drawpaddle = true;
         start = false;
+        printstatsFlag = true;
         Lifes--;
-      }d
+      }
     } else if (ballY == 2 && VballY == -1) {
+      printstatsFlag = true;
       Score++;
       VballY = 1;
     } 
 
     if (ballX == 2) {
-        VballX = 1;
+      VballX = 1;
     } else if (ballX == COLS - 1) {
       VballX = -1;
     }
@@ -210,6 +197,7 @@ void updateBallPos() {
 
   ballX = ballX + VballX;
   ballY = ballY + VballY;
+
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
     RenderGame();
@@ -246,6 +234,7 @@ void SetCursor(int x, int y) {
 void SerialManage() {
   if (Serial.available() > 0) {
     char chr = Serial.read();
+
     switch (chr) {
       case 'q':
         if (paddleX > 4) {
@@ -254,6 +243,7 @@ void SerialManage() {
           paddleX--;
           paddleX--;
           paddleMoveFlag = -1;
+          Drawpaddle = true;
         }
       break;
 
@@ -264,23 +254,28 @@ void SerialManage() {
           paddleX++;
           paddleX++;
           paddleMoveFlag = 1;
+          Drawpaddle = true;
         }
       break;
 
       case '-':
         if (Speed < 200) {
+          printstatsFlag = true;
           Speed++;
         }
       break;
 
       case '+':
         if (Speed > 0) {
+          printstatsFlag = true;
           Speed--;
         }
       break;
 
       case ' ':
         if (!start) {
+          printstatsFlag = true;
+          Drawpaddle = true;
           VballX = -1;
           VballY = -1;
           start = true;
@@ -299,11 +294,13 @@ void GameOverScreen() {
   CursorReset();
   HighScore = EEPROM.read(0);
   Serial.println(" Game Over!");
+
   if (HighScore < Score) {
     HighScore = Score;
     EEPROM.write(0, Score);
     Serial.println("New High Score!!");
   }  
+  
   Serial.print("Score : ");
   Serial.println(Score);
   Serial.print("High Score : ");
@@ -326,6 +323,8 @@ void Reset() {
   Lifes = 3;
   Frame = false;
   start = false;
+  printstatsFlag = true;
+  Drawpaddle = true;
 
   while (!exitloop) {
     if (Serial.available()) {
@@ -336,5 +335,36 @@ void Reset() {
         exitloop = true;
       }
     }
+  }
+}
+
+void PrintGameStatus() {
+  SetCursor(1, ROWS + 2);
+
+  if (!start) {
+    Serial.print("Press SPACE to Start game / Score : ");
+  } else {
+    Serial.print("Press SPACE to end game / Score : ");
+  }
+
+  Serial.println(Score);
+  Serial.print("Balls : ");
+
+  for (int i = 0; i < Lifes; i++) {
+    Serial.print("O");
+  }
+
+  Serial.print(" / Speed : ");
+
+  if (Speed <= 200 && Speed > 190) {
+    Serial.print("00");
+  } else if (Speed <= 190 && Speed > 100 ) {
+    Serial.print("0");
+  }
+
+  Serial.print(200 - Speed);
+
+  if (debug) {
+    PrintDebug();
   }
 }
