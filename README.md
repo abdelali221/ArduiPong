@@ -4,7 +4,8 @@
 
 # Requirements : 
 
- - An Arduino, and that's all!
+ - An Arduino
+ - Two Potentiometers, one or two breadboards and jumper wires (They're only needed for the two player game)
 
 # Disclamer :
 
