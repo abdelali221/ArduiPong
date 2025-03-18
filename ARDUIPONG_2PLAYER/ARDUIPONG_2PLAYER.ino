@@ -19,18 +19,17 @@ const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
 const uint8_t BELL = 7;
+const uint8_t paddle1X = COLS - 3;
+const uint8_t paddle2X = 3;
 
 // Variables :
 
-uint8_t paddle1X = COLS - 3;
+
 uint8_t paddle1Y = ROWS/2;
-uint8_t ANSpaddle1X;
-uint8_t ANSpaddle1Y;
-uint8_t paddle2X = 3;
+uint8_t ANSpaddle1Y = paddle1Y;
 uint8_t paddle2Y = ROWS/2;
-uint8_t ANSpaddle2X;
-uint8_t ANSpaddle2Y;
-uint8_t ballX = COLS - 4;
+uint8_t ANSpaddle2Y = paddle2Y;
+uint8_t ballX = COLS/2;
 uint8_t ANSballX = 2;
 uint8_t ballY = ROWS/2;
 uint8_t ANSballY = 2;
@@ -71,14 +70,12 @@ void setup() {
 }
 
 void loop() {
-  paddle1MoveFlag = 0;
-  paddle2MoveFlag = 0;
+  updateBallPos();
   RenderGame();
   if (printstatsFlag) {
     printstatsFlag = false;
     PrintGameStatus();
   }
-  updateBallPos();
   delay(Speed);
 }
 
@@ -128,26 +125,28 @@ void RenderBorders() {
 void RenderObjects() {
   if (Drawpaddle) {
     Drawpaddle = false;
-    for (int i = -1; i < 2; i++) {
-      SetCursor(ANSpaddle1X, ANSpaddle1Y + i);
-      Serial.print(" ");
+    if (ANSpaddle1Y != paddle1Y || Frame) {
+      for (int i = -1; i < 2; i++) {
+        SetCursor(paddle1X, ANSpaddle1Y + i);
+        Serial.print(" ");
+      }
+      for (int i = -1; i < 2; i++) {
+        SetCursor(paddle1X, paddle1Y + i);
+        Serial.print("[");
+      }
+      ANSpaddle1Y = paddle1Y;
     }
-    for (int i = -1; i < 2; i++) {
-      SetCursor(paddle1X, paddle1Y + i);
-      Serial.print("[");
+    if (ANSpaddle2Y != paddle2Y || Frame) {
+      for (int i = -1; i < 2; i++) {
+        SetCursor(paddle2X, ANSpaddle2Y + i);
+        Serial.print(" ");
+      }
+      for (int i = -1; i < 2; i++) {
+        SetCursor(paddle2X, paddle2Y + i);
+        Serial.print("]");
+      }
+      ANSpaddle2Y = paddle2Y;
     }
-    ANSpaddle1X = paddle1X;
-    ANSpaddle1Y = paddle1Y;
-    for (int i = -1; i < 2; i++) {
-      SetCursor(ANSpaddle2X, ANSpaddle2Y + i);
-      Serial.print(" ");
-    }
-    for (int i = -1; i < 2; i++) {
-      SetCursor(paddle2X, paddle2Y + i);
-      Serial.print("]");
-    }
-    ANSpaddle2X = paddle2X;
-    ANSpaddle2Y = paddle2Y;
   }
 
   if (ANSballX != ballX || ANSballY != ballY) {
@@ -260,6 +259,8 @@ void updateBallPos() {
 
   ballX = ballX + VballX;
   ballY = ballY + VballY;
+  paddle1MoveFlag = 0;
+  paddle2MoveFlag = 0;
 
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
@@ -298,26 +299,6 @@ void SerialManage() {
     char chr = Serial.read();
 
     switch (chr) {
-      case 'z':
-        if (paddle1Y > 3) {
-          SetCursor(paddle1X, paddle1Y + 1);
-          Serial.print(" ");
-          paddle1Y--;
-          paddle1MoveFlag = -1;
-          Drawpaddle = true;
-        }
-      break;
-
-      case 's':
-        if (paddle1Y < ROWS - 2) {
-          SetCursor(paddle1X, paddle1Y - 1);
-          Serial.print(" ");
-          paddle1Y++;
-          paddle1MoveFlag = 1;
-          Drawpaddle = true;
-        }
-      break;
-
       case '-':
         if (Speed < 200) {
           printstatsFlag = true;
@@ -372,11 +353,9 @@ void GameOverScreen() {
 }
 
 void Reset() {
-
-  paddle1X = COLS - 3;
   paddle1Y = ROWS/2;
-  ballX = paddle1X - 1;
-  ballY = paddle1Y;
+  ballX = COLS/2;
+  ballY = ROWS/2;
   VballX = 0;
   VballY = 0;
   Score = 0;
