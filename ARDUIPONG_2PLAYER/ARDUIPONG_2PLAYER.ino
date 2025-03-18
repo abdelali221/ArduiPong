@@ -1,11 +1,11 @@
-
 /* ChangeLog :
 
- - Alpha 0.1 : Initial release
- - Alpha 0.2 : Added HighScore System
- - Alpha 0.3 : Added a Horizontal Version
+ - Alpha 0.1        : Initial release
+ - Alpha 0.2        : Added HighScore System
+ - Alpha 0.3        : Added a Horizontal Version
  - Release 1.0 Rev0 : First Release/ improved rendering system (which is going to be further enhanced)
  - Release 1.0 Rev1 : Enhanced render system (Removed the Scan system because it's inefficient)
+ - Release 1.1      : Added 2 player
 
 */
 
@@ -14,7 +14,7 @@
 // Constants :
 
 const uint8_t ROWS = 20;
-const uint8_t COLS = 50;
+const uint8_t COLS = 80;
 const uint8_t NL = 10; // NewLine command
 const uint8_t CR = 13; // Carriage Return command
 const uint8_t ESC = 27;
@@ -22,15 +22,26 @@ const uint8_t BELL = 7;
 
 // Variables :
 
-uint8_t paddleX = COLS - 3;
-uint8_t paddleY = ROWS/2;
+uint8_t paddle1X = COLS - 3;
+uint8_t paddle1Y = ROWS/2;
+uint8_t ANSpaddle1X;
+uint8_t ANSpaddle1Y;
+uint8_t paddle2X = 3;
+uint8_t paddle2Y = ROWS/2;
+uint8_t ANSpaddle2X;
+uint8_t ANSpaddle2Y;
 uint8_t ballX = COLS - 4;
 uint8_t ANSballX = 2;
 uint8_t ballY = ROWS/2;
 uint8_t ANSballY = 2;
+int paddle1Pot;
+int paddle2Pot;
+int ANSpaddle1Pot;
+int ANSpaddle2Pot;
 int VballX = 0;
 int VballY = 0;
-int paddleMoveFlag = 0;
+int paddle1MoveFlag = 0;
+int paddle2MoveFlag = 0;
 uint8_t Speed = 20;
 uint8_t Score = 0;
 uint8_t Lifes = 3;
@@ -40,7 +51,7 @@ uint8_t HighScore;
 // Booleans :
 
 bool Frame = true;
-bool debug = false;
+bool debug = true;
 bool exitloop = false;
 bool start = false;
 bool printstatsFlag = true;
@@ -51,15 +62,17 @@ void setup() {
   Serial.begin(115200);
   ClearScreen();
   SetCursor(0, 0);
-  Serial.println("ARDUIPONG / Ver 1.0 Rev1 / VERTICAL Version");
+  Serial.println("ARDUIPONG / Ver 1.1 / 2 Player Version");
   Serial.println("Made By Abdelali221");
   Serial.print("Github : https://github.com/abdelali221/ArduiPong/");
   delay(2000);
   ClearScreen();
+  PotentioRead();
 }
 
 void loop() {
-  paddleMoveFlag = 0;
+  paddle1MoveFlag = 0;
+  paddle2MoveFlag = 0;
   RenderGame();
   if (printstatsFlag || debug) {
     printstatsFlag = false;
@@ -80,6 +93,8 @@ void RenderGame(){
   if (Serial.available()) {
     SerialManage();
   }
+
+  PotentioRead();
 }
 
 void RenderBorders() {
@@ -114,9 +129,25 @@ void RenderObjects() {
   if (Drawpaddle) {
     Drawpaddle = false;
     for (int i = -1; i < 2; i++) {
-      SetCursor(paddleX, paddleY + i);
+      SetCursor(ANSpaddle1X, ANSpaddle1Y + i);
+      Serial.print(" ");
+    }
+    for (int i = -1; i < 2; i++) {
+      SetCursor(paddle1X, paddle1Y + i);
       Serial.print("[");
     }
+    ANSpaddle1X = paddle1X;
+    ANSpaddle1Y = paddle1Y;
+    for (int i = -1; i < 2; i++) {
+      SetCursor(ANSpaddle2X, ANSpaddle2Y + i);
+      Serial.print(" ");
+    }
+    for (int i = -1; i < 2; i++) {
+      SetCursor(paddle2X, paddle2Y + i);
+      Serial.print("]");
+    }
+    ANSpaddle2X = paddle2X;
+    ANSpaddle2Y = paddle2Y;
   }
 
   if (ANSballX != ballX || ANSballY != ballY) {
@@ -159,13 +190,22 @@ void PrintDebug() {
   }
 
   Serial.println(VballY);
-  Serial.print(Frame);
+  Serial.println(Frame);
+  Serial.print("POT 1 : "); 
+  Serial.print((paddle1Pot*ROWS) / 1023);
+  Serial.print(" / ");
+  Serial.print(paddle1Pot);
+  Serial.print(" / POT 2 : ");
+  Serial.print((paddle2Pot*ROWS) / 1023);
+  Serial.print(" / ");
+  Serial.print(paddle2Pot);
+
 }
 
 void updateBallPos() {
   if (!start) {
-    ballX = paddleX - 1;
-    ballY = paddleY;
+    ballX = COLS/2;
+    ballY = ROWS/2;
     VballX = 0;
     VballY = 0;
   } else {
@@ -193,7 +233,7 @@ void updateBallPos() {
       VballY = -1;
     }
   
-    if (ballX == paddleX - 1 && (ballY >= paddleY - 1 && ballY <= paddleY + 1) ) {
+    if (ballX == paddle1X - 1 && (ballY >= paddle1Y - 1 && ballY <= paddle1Y + 1) ) {
       Serial.write(BELL);
       VballX = -1;
         if (ballY == 1) {      
@@ -201,8 +241,20 @@ void updateBallPos() {
       } else if (ballY == ROWS - 1) {
         VballY = -1;
       } else {
-        if (paddleMoveFlag != 0) {
-          VballY = paddleMoveFlag;
+        if (paddle1MoveFlag != 0) {
+          VballY = paddle1MoveFlag;
+        }
+      }
+    } if (ballX == paddle2X + 1 && (ballY >= paddle2Y - 1 && ballY <= paddle2Y + 1) ) {
+      Serial.write(BELL);
+      VballX = 1;
+        if (ballY == 1) {      
+        VballY = 1;
+      } else if (ballY == ROWS - 1) {
+        VballY = -1;
+      } else {
+        if (paddle2MoveFlag != 0) {
+          VballY = paddle2MoveFlag;
         }
       }
     }
@@ -249,21 +301,21 @@ void SerialManage() {
 
     switch (chr) {
       case 'z':
-        if (paddleY > 3) {
-          SetCursor(paddleX, paddleY + 1);
+        if (paddle1Y > 3) {
+          SetCursor(paddle1X, paddle1Y + 1);
           Serial.print(" ");
-          paddleY--;
-          paddleMoveFlag = -1;
+          paddle1Y--;
+          paddle1MoveFlag = -1;
           Drawpaddle = true;
         }
       break;
 
       case 's':
-        if (paddleY < ROWS - 2) {
-          SetCursor(paddleX, paddleY - 1);
+        if (paddle1Y < ROWS - 2) {
+          SetCursor(paddle1X, paddle1Y - 1);
           Serial.print(" ");
-          paddleY++;
-          paddleMoveFlag = 1;
+          paddle1Y++;
+          paddle1MoveFlag = 1;
           Drawpaddle = true;
         }
       break;
@@ -323,10 +375,10 @@ void GameOverScreen() {
 
 void Reset() {
 
-  paddleX = COLS - 3;
-  paddleY = ROWS/2;
-  ballX = paddleX - 1;
-  ballY = paddleY;
+  paddle1X = COLS - 3;
+  paddle1Y = ROWS/2;
+  ballX = paddle1X - 1;
+  ballY = paddle1Y;
   VballX = 0;
   VballY = 0;
   Score = 0;
@@ -377,4 +429,33 @@ void PrintGameStatus() {
   if (debug) {
     PrintDebug();
   }
+}
+
+void PotentioRead() {
+  paddle1Pot = analogRead(A0);
+  paddle2Pot = analogRead(A1);
+
+  if ( (ANSpaddle1Pot + 10 <= paddle1Pot || ANSpaddle1Pot - 10 >= paddle1Pot) && (paddle1Pot > 100 && paddle1Pot < 1023) ) {
+    Drawpaddle = true;
+    if (paddle1Pot > 890) {
+      paddle1Y = ROWS - 2;
+    } else if (paddle1Pot < 160) {
+       paddle1Y = 3;
+    } else {
+      paddle1Y = ((paddle1Pot*ROWS) / 1000);
+    }    
+    ANSpaddle1Pot = paddle1Pot;
+  }
+  if ( (ANSpaddle2Pot + 10 <= paddle2Pot || ANSpaddle2Pot - 10 >= paddle2Pot) && (paddle2Pot > 100 && paddle2Pot < 1023) ) {
+    Drawpaddle = true;
+    if (paddle2Pot > 890) {
+      paddle2Y = ROWS - 2;
+    } else if (paddle2Pot < 160) {
+       paddle2Y = 3;
+    } else {
+      paddle2Y = ((paddle2Pot*ROWS) / 1000);
+    }    
+    ANSpaddle2Pot = paddle2Pot;
+  }
+
 }
