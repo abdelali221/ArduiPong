@@ -51,7 +51,7 @@ uint8_t HighScore;
 // Booleans :
 
 bool Frame = true;
-bool debug = true;
+// bool debug = false;
 bool exitloop = false;
 bool start = false;
 bool printstatsFlag = true;
@@ -74,7 +74,7 @@ void loop() {
   paddle1MoveFlag = 0;
   paddle2MoveFlag = 0;
   RenderGame();
-  if (printstatsFlag || debug) {
+  if (printstatsFlag) {
     printstatsFlag = false;
     PrintGameStatus();
   }
@@ -102,7 +102,7 @@ void RenderBorders() {
 
     for (int X = 1; X <= COLS; X++) {
 
-      if ( (X == 1) && (Y >= 1 && Y <= ROWS) ) {
+      if ( (X == 1 || X == COLS) && (Y >= 1 && Y <= ROWS) ) {
 
         SetCursor(X, Y);
 
@@ -160,6 +160,7 @@ void RenderObjects() {
   }
 }
 
+/*
 void PrintDebug() {
 
   Serial.print(" / POS X : ");
@@ -202,6 +203,8 @@ void PrintDebug() {
 
 }
 
+*/
+
 void updateBallPos() {
   if (!start) {
     ballX = COLS/2;
@@ -209,8 +212,8 @@ void updateBallPos() {
     VballX = 0;
     VballY = 0;
   } else {
-    if (ballX == COLS - 1 && VballX == 1) {
-      ballX = COLS - 3;
+    if (ballX == COLS - 1 || ballX == 2) {
+      ballX = COLS/2;
       ballY = ROWS/2;      
       if (Lifes < 1) {
         GameOverScreen();
@@ -221,14 +224,9 @@ void updateBallPos() {
         start = false;
         Lifes--;
       }
-    } else if (ballX == 2 && VballX == -1) {
-      printstatsFlag = true;
-      Score++;
-      VballX = 1;
-    } 
-
+    }
     if (ballY == 2) {
-        VballY = 1;
+      VballY = 1;
     } else if (ballY == ROWS - 1) {
       VballY = -1;
     }
@@ -266,7 +264,7 @@ void updateBallPos() {
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
     Serial.println("ERROR! INVALID BALL POSITION WAS DETECTED!!!");
-    PrintDebug();
+  //  PrintDebug();
     Reset();
   }
 }
@@ -426,9 +424,9 @@ void PrintGameStatus() {
 
   Serial.print(200 - Speed);
 
-  if (debug) {
-    PrintDebug();
-  }
+//  if (debug) {
+//    PrintDebug();
+//  }
 }
 
 void PotentioRead() {
