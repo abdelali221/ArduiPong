@@ -9,8 +9,6 @@
 
 */
 
-#include <EEPROM.h>
-
 // Constants :
 
 const uint8_t ROWS = 20;
@@ -42,10 +40,9 @@ int VballY = 0;
 int paddle1MoveFlag = 0;
 int paddle2MoveFlag = 0;
 uint8_t Speed = 20;
-uint8_t Score = 0;
+uint8_t ScoreP1 = 0;
+uint8_t ScoreP2 = 0;
 uint8_t Lifes = 3;
-uint8_t HighScore;
-
 
 // Booleans :
 
@@ -212,8 +209,18 @@ void updateBallPos() {
     VballY = 0;
   } else {
     if (ballX == COLS - 1 || ballX == 2) {
+      switch (ballX) {
+        case (COLS - 1):
+          ScoreP2++;
+        break;
+        case 2:
+          ScoreP1++;
+        break;
+      }
+
       ballX = COLS/2;
-      ballY = ROWS/2;      
+      ballY = ROWS/2;
+
       if (Lifes < 1) {
         GameOverScreen();
       } else {
@@ -259,8 +266,9 @@ void updateBallPos() {
 
   ballX = ballX + VballX;
   ballY = ballY + VballY;
-  paddle1MoveFlag = 0;
-  paddle2MoveFlag = 0;
+  if (ballX > paddle2X + 1) paddle2MoveFlag = 0;
+
+  if (ballX < paddle1X - 2) paddle1MoveFlag = 0;
 
   if (ballX > COLS - 1 || ballY > ROWS - 1) {
     ClearScreen();
@@ -333,19 +341,12 @@ void SerialManage() {
 void GameOverScreen() {
   ClearScreen();
   CursorReset();
-  HighScore = EEPROM.read(0);
-  Serial.println(" Game Over!");
 
-  if (HighScore < Score) {
-    HighScore = Score;
-    EEPROM.write(0, Score);
-    Serial.println("New High Score!!");
+  if (ScoreP1 > ScoreP2) {
+    Serial.println(" Player 1 Won!");
+  } else {
+    Serial.println(" Player 2 Won!");
   }
-
-  Serial.print("Score : ");
-  Serial.println(Score);
-  Serial.print("High Score : ");
-  Serial.println(HighScore);
   Serial.print("Press ENTER to restart");
   updateBallPos();
   Reset();
@@ -358,7 +359,8 @@ void Reset() {
   ballY = ROWS/2;
   VballX = 0;
   VballY = 0;
-  Score = 0;
+  ScoreP1 = 0;
+  ScoreP2 = 0;
   Lifes = 3;
   Frame = false;
   start = false;
@@ -379,14 +381,19 @@ void Reset() {
 
 void PrintGameStatus() {
   SetCursor(1, ROWS + 2);
+  Serial.print(" PLAYER 2 : ");
+  Serial.print(ScoreP1);
+  SetCursor(COLS/2, ROWS + 2);
+  Serial.print(" PLAYER 1 : ");
+  Serial.print(ScoreP2);
+  SetCursor(1, ROWS + 4);
 
   if (!start) {
-    Serial.print("Press SPACE to Start game / Score : ");
+    Serial.println("Press SPACE to Start game");
   } else {
-    Serial.print("Press SPACE to end game / Score : ");
+    Serial.println("Press SPACE to end game");
   }
-
-  Serial.println(Score);
+  
   Serial.print("Balls : ");
 
   for (int i = 0; i < Lifes; i++) {
@@ -412,7 +419,7 @@ void PotentioRead() {
   paddle1Pot = analogRead(A0);
   paddle2Pot = analogRead(A1);
 
-  if ( (ANSpaddle1Pot + 10 <= paddle1Pot || ANSpaddle1Pot - 10 >= paddle1Pot) && (paddle1Pot > 100 && paddle1Pot < 1023) ) {
+  if ( (ANSpaddle1Pot != paddle1Pot) && (paddle1Pot > 100 && paddle1Pot < 1023) ) {
     Drawpaddle = true;
     if (paddle1Pot > 890) {
       paddle1Y = ROWS - 2;
@@ -420,10 +427,15 @@ void PotentioRead() {
        paddle1Y = 3;
     } else {
       paddle1Y = ((paddle1Pot*ROWS) / 1000);
-    }    
+    }
+    if (ANSpaddle1Pot < paddle1Pot) {
+      paddle1MoveFlag = 1;
+    } else if (ANSpaddle1Pot > paddle1Pot) {
+      paddle1MoveFlag = -1;
+    }
     ANSpaddle1Pot = paddle1Pot;
   }
-  if ( (ANSpaddle2Pot + 10 <= paddle2Pot || ANSpaddle2Pot - 10 >= paddle2Pot) && (paddle2Pot > 100 && paddle2Pot < 1023) ) {
+  if ( (ANSpaddle2Pot != paddle2Pot) && (paddle2Pot > 100 && paddle2Pot < 1023) ) {
     Drawpaddle = true;
     if (paddle2Pot > 890) {
       paddle2Y = ROWS - 2;
@@ -431,7 +443,12 @@ void PotentioRead() {
        paddle2Y = 3;
     } else {
       paddle2Y = ((paddle2Pot*ROWS) / 1000);
-    }    
+    }
+    if (ANSpaddle2Pot < paddle2Pot) {
+      paddle2MoveFlag = 1;
+    } else if (ANSpaddle2Pot > paddle2Pot) {
+      paddle2MoveFlag = -1;
+    }  
     ANSpaddle2Pot = paddle2Pot;
   }
 
