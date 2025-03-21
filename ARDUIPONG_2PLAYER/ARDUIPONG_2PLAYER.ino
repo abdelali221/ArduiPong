@@ -382,10 +382,10 @@ void Reset() {
 void PrintGameStatus() {
   SetCursor(1, ROWS + 2);
   Serial.print(" PLAYER 2 : ");
-  Serial.print(ScoreP1);
+  Serial.print(ScoreP2);
   SetCursor(COLS/2, ROWS + 2);
   Serial.print(" PLAYER 1 : ");
-  Serial.print(ScoreP2);
+  Serial.print(ScoreP1);
   SetCursor(1, ROWS + 4);
 
   if (!start) {
@@ -419,7 +419,7 @@ void PotentioRead() {
   paddle1Pot = analogRead(A0);
   paddle2Pot = analogRead(A1);
 
-  if ( (ANSpaddle1Pot != paddle1Pot) && (paddle1Pot > 100 && paddle1Pot < 1023) ) {
+  if (ANSpaddle1Pot != paddle1Pot) {
     Drawpaddle = true;
     if (paddle1Pot > 890) {
       paddle1Y = ROWS - 2;
@@ -435,7 +435,7 @@ void PotentioRead() {
     }
     ANSpaddle1Pot = paddle1Pot;
   }
-  if ( (ANSpaddle2Pot != paddle2Pot) && (paddle2Pot > 100 && paddle2Pot < 1023) ) {
+  if (ANSpaddle2Pot != paddle2Pot) {
     Drawpaddle = true;
     if (paddle2Pot > 890) {
       paddle2Y = ROWS - 2;
